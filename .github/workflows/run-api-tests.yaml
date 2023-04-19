@@ -10,7 +10,6 @@ on:
 jobs:
   # build, the name of the job, a server to create and auto configure
   build:
-
     # on github actions this comes with MySQL 8.0 :)
     runs-on: ubuntu-latest
 
@@ -23,29 +22,29 @@ jobs:
     steps:
       # action from github marketplace, actions
       # checkout this repo on the server
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      # action from github marketplace, actions
-      # install Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-      # npm ci ≈ read-only from package.json version
-      # of npm install -> installs all npm modules
-      # mentioned in package.json, preferably during CI
-    - run: npm ci
-      # start mysql and change default password
-      # use the password from your settings.json fil in this repo
-    - run: sudo service mysql start
-    - run: mysqladmin --user=root --password=root password "rootroot"
-      # restart mysql
-    - run: sudo service mysql restart
-      # seed the db with initial dummy/test data
-    - run: npm run seed-db
-      # start the backend / rest-api-server 
-      # (without blocking the terminal - nohup)
-    - run: nohup npm run backend &
-      # run whatever is specified in package.json
-      # for the script test
-    - run: npm test
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        # action from github marketplace, actions
+        # install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+        # npm ci ≈ read-only from package.json version
+        # of npm install -> installs all npm modules
+        # mentioned in package.json, preferably during CI
+      - run: npm ci
+        # start mysql and change default password
+        # use the password from your settings.json fil in this repo
+      - run: sudo service mysql start
+      - run: mysqladmin --user=root --password=root password "rootroot"
+        # restart mysql
+      - run: sudo service mysql restart
+        # seed the db with initial dummy/test data
+      - run: npm run seed-db
+        # start the backend / rest-api-server
+        # (without blocking the terminal - nohup)
+      - run: nohup npm run backend &
+        # run whatever is specified in package.json
+        # for the script test
+      - run: npm test
