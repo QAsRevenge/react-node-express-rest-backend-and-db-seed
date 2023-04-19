@@ -9,7 +9,8 @@
     "backend": "cd backend && node index.js",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "newman api-tests/cinema-tests.postman.json"
   },
   "dependencies": {
     "express": "^4.18.2",
