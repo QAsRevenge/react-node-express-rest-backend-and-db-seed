@@ -1,0 +1,375 @@
+{
+	"info": {
+		"_postman_id": "50b39cb1-2e2f-4d4a-a289-8e1aeb2d42ab",
+		"name": "Booking-tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24654383",
+		"_collection_link": "https://planetary-satellite-167316.postman.co/workspace/Devops22~9888827a-65b1-4e5c-8735-690a265b87dc/collection/24654383-50b39cb1-2e2f-4d4a-a289-8e1aeb2d42ab?action=share&creator=24654383&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "Check occupied seats",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"\r",
+							"pm.test('expect status code 200', () => {\r",
+							"    pm.expect(pm.response.code).to.equal(200)\r",
+							"})\r",
+							"\r",
+							"let occupiedSeats = response[0].occupiedSeats.split(\", \").map(x => +x);\r",
+							"\r",
+							"let availableSeats = [];\r",
+							"for(let i = 1; i<82; i++){\r",
+							"    !occupiedSeats.includes(i) && availableSeats.push(i)\r",
+							"};\r",
+							"\r",
+							"pm.environment.set(\"availableSeats\", JSON.stringify(availableSeats))"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/api/occupied_seats/?screeningId=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"occupied_seats",
+						""
+					],
+					"query": [
+						{
+							"key": "screeningId",
+							"value": "1"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Generate the booking",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let booking = {\r",
+							"    \"bookingNumber\":\"XYZ000\",\r",
+							"    \"screeningId\":1,\r",
+							"    \"userId\":1\r",
+							"}\r",
+							"\r",
+							"pm.environment.set('mockData', JSON.stringify(booking));\r",
+							"\r",
+							"\r",
+							"let mockData = JSON.parse(pm.environment.get('mockData'));\r",
+							"for(let [key,val] of Object.entries(mockData)){\r",
+							"    pm.environment.set(key,val);\r",
+							"}\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"pm.test('Expected status code 200', () => {\r",
+							"    pm.expect(pm.response.code).to.equal(200)\r",
+							"});\r",
+							"\r",
+							"pm.test('Check that affected rows is 1', () => {\r",
+							"    pm.expect(response.affectedRows).to.equal(1)\r",
+							"});\r",
+							"\r",
+							"let mockData = JSON.parse(pm.environment.get('mockData'));\r",
+							"mockData.id = response.insertId;\r",
+							"pm.environment.set('mockData', JSON.stringify(mockData));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"bookingNumber\":\"{{bookingNumber}}\",\r\n\"screeningId\":\"{{screeningId}}\",\r\n\"userId\":\"{{userId}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:4000/api/bookings",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"bookings"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Book the seats",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"pm.test('Expected status code 200', () => {\r",
+							"    pm.expect(pm.response.code).to.equal(200)\r",
+							"});\r",
+							"\r",
+							"pm.test('Check that affected rows is 1', () => {\r",
+							"    pm.expect(response.affectedRows).to.equal(1)\r",
+							"});\r",
+							"\r",
+							"let seatData = JSON.parse(pm.environment.get('seatData'));\r",
+							"let seatIndex = +pm.environment.get('seatIndex');\r",
+							"let seat = seatData[seatIndex];\r",
+							"seat.id = response.insertId\r",
+							"seatData[seatIndex] = seat;\r",
+							"pm.environment.set('seatData', JSON.stringify(seatData));\r",
+							"seatIndex++\r",
+							"\r",
+							"if(!seatData[seatIndex]) {\r",
+							"    pm.environment.set('seatIndex', 0)\r",
+							"}\r",
+							"else {\r",
+							"    pm.environment.set('seatIndex', seatIndex)\r",
+							"    postman.setNextRequest('Book the seats')\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let seats = JSON.parse(pm.environment.get('availableSeats'));\r",
+							"\r",
+							"if(!pm.environment.get('seatData')){\r",
+							"    pm.environment.set('seatData', JSON.stringify(\r",
+							"[{\r",
+							"    \"bookingId\" : \"null\",\r",
+							"    \"seatId\":seats[0],\r",
+							"    \"ticketTypeId\" : 2\r",
+							"\r",
+							"},\r",
+							"{\r",
+							"   \"bookingId\" : \"null\",\r",
+							"    \"seatId\":seats[1],\r",
+							"    \"ticketTypeId\" : 2 \r",
+							"}]\r",
+							"    ))\r",
+							"    pm.environment.set('seatIndex', \"0\")\r",
+							"};\r",
+							"\r",
+							"let mockData = JSON.parse(pm.environment.get('mockData'));\r",
+							"let seatData = JSON.parse(pm.environment.get('seatData'));\r",
+							"let seatIndex = +pm.environment.get('seatIndex');\r",
+							"let seat = seatData[seatIndex];\r",
+							"\r",
+							"seat.bookingId = +mockData.id;\r",
+							"seatData[seatIndex] = seat;\r",
+							"pm.environment.set('seatData', JSON.stringify(seatData));\r",
+							"\r",
+							"for(let [key, val] of Object.entries(seat)) {\r",
+							"    pm.environment.set(key,val)\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"bookingId\": {{bookingId}},\r\n    \"seatId\": {{seatId}},\r\n    \"ticketTypeId\": {{ticketTypeId}}\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:4000/api/bookingsxseats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"bookingsxseats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check that booked seat shows in occupied_seats",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let mockData = JSON.parse(pm.environment.get('mockData'));\r",
+							"pm.environment.set('id', mockData.screeningId)"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"let seatData = JSON.parse(pm.environment.get('seatData'));\r",
+							"\r",
+							"pm.test('Expect status code 200', () => {\r",
+							"    pm.expect(pm.response.code).to.equal(200);\r",
+							"})\r",
+							"\r",
+							"pm.test('Expect view occupied_seats to include the booked seats', () => {\r",
+							"    pm.expect(response[0].occupiedSeats).to.include(seatData[0].seatId)\r",
+							"    pm.expect(response[0].occupiedSeats).to.include(seatData[1].seatId)\r",
+							"})\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/api/occupied_seats/?screeningId={{id}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"occupied_seats",
+						""
+					],
+					"query": [
+						{
+							"key": "screeningId",
+							"value": "{{id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Check that booking shows in booking_overview",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let mockData = JSON.parse(pm.environment.get('mockData'));\r",
+							"pm.environment.set('id', mockData.bookingNumber);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"let seatData = JSON.parse(pm.environment.get('seatData'));\r",
+							"\r",
+							"pm.test('Expect status code 200', () => {\r",
+							"    pm.expect(pm.response.code).to.equal(200)\r",
+							"})\r",
+							"pm.test('Expect that there is a two-seat booking', () => {\r",
+							"    pm.expect(response[0].seats).to.include(seatData[0].seatId)\r",
+							"    pm.expect(response[0].seats).to.include(seatData[1].seatId)\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:4000/api/bookings_overview?bookingNumber={{id}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"api",
+						"bookings_overview"
+					],
+					"query": [
+						{
+							"key": "bookingNumber",
+							"value": "{{id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

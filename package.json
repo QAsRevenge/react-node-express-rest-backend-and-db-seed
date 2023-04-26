@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "newman run api-tests/cinema-tests.postman_collection.json"
+    "test": "newman run api-tests/cinema-tests.postman_collection.json && newman run api-tests/Booking-tests.postman_collection.json"
   },
   "dependencies": {
     "express": "^4.18.2",
