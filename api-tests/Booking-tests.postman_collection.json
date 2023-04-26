@@ -75,7 +75,7 @@
 					"script": {
 						"exec": [
 							"let booking = {\r",
-							"    \"bookingNumber\":\"XYZ000\",\r",
+							"    \"bookingNumber\":\"JSX123\",\r",
 							"    \"screeningId\":1,\r",
 							"    \"userId\":1\r",
 							"}\r",
