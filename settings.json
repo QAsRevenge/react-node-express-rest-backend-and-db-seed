@@ -5,6 +5,7 @@
   "database": "cinema",
   "mySqlUser": "root",
   "mySqlPassword": "rootroot",
+  // Nothing changed, comment just so i can push
   "passwordSalt": "someHardToGuessStringYouNeverChange",
   "sessionSalt": "someHardToGuessStringYouSeldomChange"
 }
